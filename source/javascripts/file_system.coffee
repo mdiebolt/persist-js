@@ -7,6 +7,62 @@ do ->
 
   requestFS = window.requestFileSystem || window.webkitRequestFileSystem
 
+  createDirectory = (root, path) ->
+    # strip off leading /
+    path = path.slice(1) if path[0] is '/'
+
+    directories = path.split '/'
+
+    root.getDirectory directories[0], {create: true}, (dir) ->
+      newPath = directories.slice(1).join('/')
+
+      return createDirectory(dir, newPath) if directories.length
+    , errorHandler
+
+  extension = (fileName) ->
+    [prefixes..., ext] = fileName.split('.')
+
+    return ext
+
+  mimeType = (ext) ->
+    types =
+      coffee: {type: 'application/coffeescript'}
+      js: {type: 'text/javascript'}
+      txt: {type: 'text/plain'}
+
+    types[ext]
+
+  createFile = (path, data) ->
+    # strip off leading /
+    path = path.slice(1) if path[0] is '/'
+
+    # make sure all parent directories exist
+    [directories..., file] = path.split '/'
+
+    if directories.length
+      createDirectory(fileSystem.root, directories.join('/'))
+
+    # now that the directories exist, create the file
+    fileSystem.root.getFile path, {create: true}, (file) ->
+      file.createWriter (fileWriter) ->
+        fileWriter.onwriteend = ->
+          console.log 'write completed'
+        fileWriter.onerror = (e) ->
+          console.log "write failed #{e.toString()}"
+
+        [_..., fileName] = path.split('/')
+
+        ext = extension(fileName)
+
+        blob = new Blob([data], mimeType(ext))
+
+        fileWriter.write(blob)
+
+      , errorHandler
+    , errorHandler
+
+    return null
+
   errorHandler = (e) ->
     msg = ''
 
@@ -21,6 +77,8 @@ do ->
         msg = 'INVALID_MODIFICATION_ERR'
       when FileError.INVALID_STATE_ERR
         msg = 'INVALID_STATE_ERR'
+      when FileError.TYPE_MISMATCH_ERR
+        msg = 'This file extension is not supported'
       else
         msg = 'Unknown Error'
 
@@ -32,6 +90,8 @@ do ->
     successCallback: (fs) ->
       console.log('Opened file system: ' + fs.name)
       fileSystem = fs
+
+      createDirectory(fileSystem.root, 'Documents/Images/Nature/Sky/')
     errorCallback: errorHandler
 
   window.webkitStorageInfo.requestQuota defaults.type, defaults.size, (grantedBytes) ->
@@ -41,28 +101,4 @@ do ->
 
   Persist.fileSystem =
     file: (path, data) ->
-      if data
-        fileSystem.root.getFile path, {create: true}, (fileEntry) ->
-          fileEntry.createWriter (fileWriter) ->
-            fileWriter.onwriteend = ->
-              console.log 'write completed'
-            fileWriter.onerror = (e) ->
-              console.log "write failed #{e.toString()}"
-
-            blob = new Blob [data, {type: 'text/plain'}]
-
-            fileWriter.write(blob)
-
-          , errorHandler
-        , errorHandler
-      else
-        fileSystem.root.getFile path, {}, (fileEntry) ->
-          fileEntry.file (file) ->
-             reader = new FileReader()
-
-             reader.onloadend = (e) ->
-               console.log(@result)
-
-             reader.readAsText(file)
-          , errorHandler
-        , errorHandler
+      createFile(path, data)
