@@ -3,11 +3,37 @@ window.Persist ||= {}
 Persist.localStorage =
   initialize: ->
     ;
+
   file: (path, data) ->
-    if data
-      localStorage.setItem(path, data)
+    # strip off leading /
+    path = path.slice(1) if path[0] is '/'
+
+    [directories..., file] = path.split('/')
+
+    if data && file
+      directoryPath = directories.join('/')
+      directoryPath += '/' unless directoryPath.length
+
+      if (directoryContents = localStorage.getItem(directoryPath))
+        try
+          files = JSON.parse directoryContents
+
+      files ||= {}
+
+      files[file] = data
+
+      localStorage.setItem(directoryPath, JSON.stringify(files))
+
+      files
     else
-      localStorage.getItem(path)
+      if file.indexOf('.') > -1
+        directoryPath = directories.join('/')
+        directoryPath += '/' unless directoryPath.length
+
+        JSON.parse(localStorage.getItem(directoryPath))[file]
+      else
+        JSON.parse(localStorage.getItem(path))
+
   toString: ->
     output = '\n'
 
