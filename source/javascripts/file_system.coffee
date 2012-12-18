@@ -64,41 +64,39 @@ do ->
     return null
 
   errorHandler = (e) ->
-    msg = ''
+    errorMap = {}
 
-    switch e.code
-      when FileError.QUOTA_EXCEEDED_ERR
-        msg = 'File system storage limit exceeded'
-      when FileError.NOT_FOUND_ERR
-        msg = 'File or directory not found'
-      when FileError.SECURITY_ERR
-        msg = 'SECURITY_ERR'
-      when FileError.INVALID_MODIFICATION_ERR
-        msg = 'INVALID_MODIFICATION_ERR'
-      when FileError.INVALID_STATE_ERR
-        msg = 'INVALID_STATE_ERR'
-      when FileError.TYPE_MISMATCH_ERR
-        msg = 'This file extension is not supported'
-      else
-        msg = 'Unknown Error'
+    errorMap[FireError.QUOTA_EXCEEDED_ERR] = 'File system storage limit exceeded'
+    errorMap[FileError.NOT_FOUND_ERR] = 'File or directory not found'
+    errorMap[FileError.SECURITY_ERR] = 'Security Error'
+    errorMap[FireError.INVALID_MODIFICATION_ERR] = 'Invalid modification'
+    errorMap[FileError.TYPE_MISMATCH_ERR] = 'This file extension is not supported'
+
+    if errorMap[e.code]
+      msg = errorMap[e.code]
+    else
+      msg = 'Unknown Error'
 
     console.log msg
 
-  defaults =
-    type: PERSISTENT
-    size: 500 * 1024 * 1024
-    successCallback: (fs) ->
-      console.log('Opened file system: ' + fs.name)
-      fileSystem = fs
-
-      createDirectory(fileSystem.root, 'Documents/Images/Nature/Sky/')
-    errorCallback: errorHandler
-
-  window.webkitStorageInfo.requestQuota defaults.type, defaults.size, (grantedBytes) ->
-    requestFS(defaults.type, grantedBytes, defaults.successCallback, defaults.errorCallback)
-  , (e) ->
-    console.log('Error', e)
-
   Persist.fileSystem =
+    initialize: ->
+      defaults =
+        type: PERSISTENT
+        size: 500 * 1024 * 1024
+        successCallback: (fs) ->
+          console.log('Opened file system: ' + fs.name)
+          fileSystem = fs
+
+          createDirectory(fileSystem.root, 'Documents/Images/Nature/Sky/')
+        errorCallback: errorHandler
+
+      window.webkitStorageInfo.requestQuota defaults.type, defaults.size, (grantedBytes) ->
+        requestFS(defaults.type, grantedBytes, defaults.successCallback, defaults.errorCallback)
+      , (e) ->
+        console.log('Error', e)
     file: (path, data) ->
-      createFile(path, data)
+      if data?
+        createFile(path, data)
+      else
+        createDirectory(fileSystem.root, path)

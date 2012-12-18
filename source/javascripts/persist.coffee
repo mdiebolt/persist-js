@@ -17,8 +17,16 @@ do ->
   else if supportsLocalStorage()
     storageMode = 'localStorage'
 
+  # debugging
+  storageMode = 'localStorage'
+
+  Persist[storageMode].initialize()
+
   Persist.save = (filePath, data) ->
     Persist[storageMode].file(filePath, data)
 
   Persist.find = (filePath) ->
     Persist[storageMode].file(filePath)
+
+  Persist.toString = ->
+    Persist[storageMode].toString()
