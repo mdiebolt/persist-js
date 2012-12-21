@@ -36,15 +36,22 @@ Persist.localStorage =
 
     [directories..., fileName] = path.split '/'
 
-    # data and a file name were provided
-    if data && fileName
+    # weird hack if we only have a directory
+    unless directories.length
+      unless isFile(fileName)
+        directories = [fileName]
+        fileName = ''
+
+    # file data is provided
+    if data?
       directoryPath = constructDirectoryPath(directories)
 
       # see if there are already files saved in this
       # directory. Otherwise, create a new 'directory'
       files = safeParse(safeGet(directoryPath)) || {}
 
-      files[fileName] = data
+      if fileName.length
+        files[fileName] = data
 
       localStorage.setItem(directoryPath, JSON.stringify(files))
     # no data was provided so we're using this as a getter
@@ -66,8 +73,6 @@ Persist.localStorage =
     if isFile(fileName)
       directoryPath = constructDirectoryPath(directories)
 
-      debugger
-
       if item = safeGet(directoryPath)
         obj = JSON.parse(item)
 
@@ -75,6 +80,8 @@ Persist.localStorage =
 
         localStorage.setItem(directoryPath, JSON.stringify(obj))
     else
+      path = path.slice(0, -1) if path[path.length - 1] is '/'
+
       localStorage.removeItem(path)
 
   toString: ->

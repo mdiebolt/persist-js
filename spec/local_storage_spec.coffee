@@ -1,23 +1,51 @@
+# put `describe` and `it` in the global namespace
 buster.spec.expose()
 
 describe 'local storage', ->
-  it 'should define file method', ->
+  it 'defines file method', ->
     expect(Persist.localStorage.file).toBeDefined()
+
+describe 'a path string', ->
+  describe 'containing an empty string', ->
+    it 'does not try to create a file', ->
+      Persist.localStorage.file('', 'does not work')
+
+      expect(Persist.localStorage.file('')).not.toBeDefined()
+
+  describe 'containing only a slash', ->
+    it 'does not try to create a file', ->
+      Persist.localStorage.file('/', 'does not work')
+
+      expect(Persist.localStorage.file('/')).not.toBeDefined()
+
+  describe 'containing a leading slash', ->
+    it 'is treated the same as without the slash', ->
+      Persist.localStorage.file('/a/leading/slash.txt', 'leading slash')
+
+      leadingSlashFile = Persist.localStorage.file('/a/leading/slash.txt')
+      noSlashFile = Persist.localStorage.file('a/leading/slash.txt')
+
+      expect(leadingSlashFile).toEqual(noSlashFile)
+
+      leadingSlashDir = Persist.localStorage.file('/a/leading')
+      noSlashDir = Persist.localStorage.file('a/leading')
+
+      expect(leadingSlashDir).toEqual(noSlashDir)
 
 describe 'Persist.localStorage#file', ->
   describe 'retrieving data', ->
     describe 'when a file does not exist', ->
-      it 'should return undefined', ->
+      it 'returns undefined', ->
         expect(Persist.localStorage.file('some/test/file.coffee')).not.toBeDefined()
 
-    describe 'when a file does exist', ->
+    describe 'when a file exists', ->
       before ->
         localStorage.setItem 'test/path', '{"some_file.coffee":true}'
 
       after ->
         localStorage.removeItem 'test/path'
 
-      it 'should return the file contents', ->
+      it 'returns the file contents', ->
         expect(Persist.localStorage.file('test/path/some_file.coffee')).toBeDefined()
 
     describe 'when the path is a directory', ->
@@ -30,7 +58,7 @@ describe 'Persist.localStorage#file', ->
         after ->
           localStorage.removeItem 'a/directory'
 
-        it 'should return the contents of that directory', ->
+        it 'returns the contents of that directory', ->
           dir = Persist.localStorage.file('a/directory')
 
           expect(dir['file1.txt']).toEqual('contents 1')
@@ -38,28 +66,49 @@ describe 'Persist.localStorage#file', ->
           expect(dir['file3.txt']).toEqual('contents 3')
 
       describe 'and the directory does not exist', ->
-        it 'should return undefined', ->
+        it 'returns undefined', ->
           dir = expect(Persist.localStorage.file('no/dir')).not.toBeDefined()
 
   describe 'saving data', ->
-    before ->
-      Persist.localStorage.file('data/test.txt', 'file contents')
+    describe 'creating an empty directory', ->
+      it 'works', ->
+        Persist.localStorage.file('dir/', '')
 
-    after ->
-      localStorage.removeItem 'data'
+        dir = Persist.localStorage.file('dir')
 
-    it 'creates a local storage entry', ->
-      file = localStorage.getItem('data')
+        expect(dir).toBeObject()
+        expect(Object.keys(dir).length).toEqual(0)
 
-      expect(file).toBeDefined()
-      expect(JSON.parse(file)['test.txt']).toEqual('file contents')
+    describe 'at the root level', ->
+      it 'works with a leading slash', ->
+        Persist.localStorage.file('/root.txt', 'my root data')
 
-    it 'overwrites the previous value', ->
-      Persist.localStorage.file('data/test.txt', 'overwritten!')
+        expect(Persist.localStorage.file('/root.txt')).toEqual('my root data')
 
-      file = localStorage.getItem('data')
+      it 'works without a leading slash', ->
+        Persist.localStorage.file('no_slash.txt', 'no slash data')
 
-      expect(JSON.parse(file)['test.txt']).toEqual('overwritten!')
+        expect(Persist.localStorage.file('no_slash.txt')).toEqual('no slash data')
+
+    describe 'in a directory', ->
+      before ->
+        Persist.localStorage.file('data/test.txt', 'file contents')
+
+      after ->
+        localStorage.removeItem 'data'
+
+      it 'creates a local storage entry', ->
+        file = localStorage.getItem('data')
+
+        expect(file).toBeDefined()
+        expect(JSON.parse(file)['test.txt']).toEqual('file contents')
+
+      it 'overwrites the previous value', ->
+        Persist.localStorage.file('data/test.txt', 'overwritten!')
+
+        file = localStorage.getItem('data')
+
+        expect(JSON.parse(file)['test.txt']).toEqual('overwritten!')
 
   describe 'removing data', ->
     before ->
