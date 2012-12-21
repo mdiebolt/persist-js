@@ -1,38 +1,81 @@
 window.Persist ||= {}
 
+safeParse = (string) ->
+  try
+    return JSON.parse string
+  catch e
+    return undefined
+
+safeGet = (string) ->
+  try
+    return localStorage.getItem(string)
+  catch e
+    return undefined
+
+constructDirectoryPath = (directories) ->
+  path = directories.join('/')
+
+  path += '/' unless path.length
+
+  return path
+
+normalizePath = (path) ->
+  path = path.slice(1) if path[0] is '/'
+
+  return path
+
+isFile = (string) ->
+  string.indexOf('.') > -1
+
 Persist.localStorage =
   initialize: ->
     ;
 
   file: (path, data) ->
-    # strip off leading /
-    path = path.slice(1) if path[0] is '/'
+    path = normalizePath(path)
 
-    [directories..., file] = path.split('/')
+    [directories..., fileName] = path.split '/'
 
-    if data && file
-      directoryPath = directories.join('/')
-      directoryPath += '/' unless directoryPath.length
+    # data and a file name were provided
+    if data && fileName
+      directoryPath = constructDirectoryPath(directories)
 
-      if (directoryContents = localStorage.getItem(directoryPath))
-        try
-          files = JSON.parse directoryContents
+      # see if there are already files saved in this
+      # directory. Otherwise, create a new 'directory'
+      files = safeParse(safeGet(directoryPath)) || {}
 
-      files ||= {}
-
-      files[file] = data
+      files[fileName] = data
 
       localStorage.setItem(directoryPath, JSON.stringify(files))
-
-      files
+    # no data was provided so we're using this as a getter
     else
-      if file.indexOf('.') > -1
-        directoryPath = directories.join('/')
-        directoryPath += '/' unless directoryPath.length
+      if isFile(fileName)
+        directoryPath = constructDirectoryPath(directories)
 
-        JSON.parse(localStorage.getItem(directoryPath))[file]
+        if item = safeGet(directoryPath)
+          JSON.parse(item)[fileName]
       else
-        JSON.parse(localStorage.getItem(path))
+        if item = safeGet(path)
+          JSON.parse(item)
+
+  remove: (path) ->
+    path = normalizePath(path)
+
+    [directories..., fileName] = path.split '/'
+
+    if isFile(fileName)
+      directoryPath = constructDirectoryPath(directories)
+
+      debugger
+
+      if item = safeGet(directoryPath)
+        obj = JSON.parse(item)
+
+        delete obj[fileName]
+
+        localStorage.setItem(directoryPath, JSON.stringify(obj))
+    else
+      localStorage.removeItem(path)
 
   toString: ->
     output = '\n'
