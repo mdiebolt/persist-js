@@ -22,6 +22,8 @@ constructDirectoryPath = (directories) ->
 normalizePath = (path) ->
   path = path.slice(1) if path[0] is '/'
 
+  path = path.substr(0, path.length - 1) if path[path.length - 1] is '/'
+
   return path
 
 isFile = (string) ->
@@ -36,21 +38,20 @@ Persist.localStorage =
 
     [directories..., fileName] = path.split '/'
 
-    # weird hack if we only have a directory
-    unless directories.length
-      unless isFile(fileName)
-        directories = [fileName]
-        fileName = ''
+    # treat the file as a directory if there is no extension
+    unless isFile(fileName)
+      directories.push(fileName)
+      fileName = ''
 
     # file data is provided
     if data?
       directoryPath = constructDirectoryPath(directories)
 
       # see if there are already files saved in this
-      # directory. Otherwise, create a new 'directory'
+      # directory. Otherwise, create a new directory
       files = safeParse(safeGet(directoryPath)) || {}
 
-      if fileName.length
+      if isFile(fileName)
         files[fileName] = data
 
       localStorage.setItem(directoryPath, JSON.stringify(files))

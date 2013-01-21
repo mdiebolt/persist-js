@@ -2,6 +2,10 @@
 buster.spec.expose()
 
 describe 'local storage', ->
+  before ->
+    for k in Object.keys(localStorage)
+      localStorage.removeItem(k)
+
   it 'defines file method', ->
     expect(Persist.localStorage.file).toBeDefined()
 
@@ -59,27 +63,51 @@ describe 'Persist.localStorage#file', ->
           localStorage.removeItem 'a/directory'
 
         it 'returns the contents of that directory', ->
-          dir = Persist.localStorage.file('a/directory')
+          directory = Persist.localStorage.file('a/directory')
 
-          expect(dir['file1.txt']).toEqual('contents 1')
-          expect(dir['file2.txt']).toEqual('contents 2')
-          expect(dir['file3.txt']).toEqual('contents 3')
+          expect(directory['file1.txt']).toEqual('contents 1')
+          expect(directory['file2.txt']).toEqual('contents 2')
+          expect(directory['file3.txt']).toEqual('contents 3')
 
       describe 'and the directory does not exist', ->
         it 'returns undefined', ->
-          dir = expect(Persist.localStorage.file('no/dir')).not.toBeDefined()
+          directory = expect(Persist.localStorage.file('no/dir')).not.toBeDefined()
 
   describe 'saving data', ->
     describe 'creating an empty directory', ->
+      after ->
+        localStorage.removeItem('dir')
+        localStorage.removeItem('nested/empty/dir')
+
       it 'works', ->
         Persist.localStorage.file('dir/', '')
 
-        dir = Persist.localStorage.file('dir')
+        directory = Persist.localStorage.file('dir')
 
-        expect(dir).toBeObject()
-        expect(Object.keys(dir).length).toEqual(0)
+        expect(directory).toBeObject()
+        expect(Object.keys(directory).length).toEqual(0)
+
+      it 'works without trailing slash', ->
+        Persist.localStorage.file('dir', '')
+
+        directory = Persist.localStorage.file('dir')
+
+        expect(directory).toBeObject()
+        expect(Object.keys(directory).length).toEqual(0)
+
+      it 'works with nested directories', ->
+        Persist.localStorage.file('nested/empty/dir', '')
+
+        directory = Persist.localStorage.file('nested/empty/dir')
+
+        expect(directory).toBeObject()
+        expect(Object.keys(directory).length).toEqual(0)
 
     describe 'at the root level', ->
+      after ->
+        localStorage.removeItem 'root.txt'
+        localStorage.removeItem 'no_slash.txt'
+
       it 'works with a leading slash', ->
         Persist.localStorage.file('/root.txt', 'my root data')
 
