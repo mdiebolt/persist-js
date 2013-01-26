@@ -6,10 +6,10 @@ do ->
   fileSystem = null
 
   requestFS = window.requestFileSystem || window.webkitRequestFileSystem
+  storageInfo = window.storageInfo || window.webkitStorageInfo
 
   createDirectory = (root, path) ->
-    # strip off leading /
-    path = path.slice(1) if path[0] is '/'
+    path = normalizePath(path)
 
     directories = path.split '/'
 
@@ -17,6 +17,28 @@ do ->
       newPath = directories.slice(1).join('/')
 
       return createDirectory(dir, newPath) if directories.length
+    , errorHandler
+
+  readDirectory = (root, dirPath, fileName) ->
+    dirPath = normalizePath(dirPath)
+
+    output = null
+
+    root.getDirectory dirPath, {}, (dir) ->
+      reader = dir.createReader()
+
+      reader.readEntries (entries) ->
+        for entry in entries
+          if fileName.length
+            console.log 'File Matched' if fileName is entry.name
+          else
+            if entry.isDirectory
+              console.log "Dir: #{entry.fullPath}"
+            else if entry.isFile
+              console.log "File: #{entry.fullPath}"
+
+        undefined
+      , errorHandler
     , errorHandler
 
   extension = (fileName) ->
@@ -32,12 +54,28 @@ do ->
 
     types[ext]
 
-  createFile = (path, data) ->
-    # strip off leading /
+  normalizePath = (path) ->
     path = path.slice(1) if path[0] is '/'
 
-    # make sure all parent directories exist
-    [directories..., file] = path.split '/'
+    length = path.length
+
+    path = path.substr(0, length - 1) if path[length - 1] is '/'
+
+    return path
+
+  isFile = (string) ->
+    string.indexOf('.') > -1
+
+  createFile = (path, data) ->
+    path = normalizePath(path)
+
+    return unless path.length
+
+    [directories..., fileName] = path.split '/'
+
+    unless isFile(fileName)
+      directories.push(fileName)
+      fileName = ''
 
     if directories.length
       createDirectory(fileSystem.root, directories.join('/'))
@@ -61,15 +99,26 @@ do ->
       , errorHandler
     , errorHandler
 
+    return data
+
+  readFile = (path) ->
+    fileSystem.root.getFile path, {}, (entry) ->
+      entry.file (f) ->
+        reader = new FileReader()
+
+        reader.readAsText(f)
+      , errorHandler
+    , errorHandler
+
     return null
 
   errorHandler = (e) ->
     errorMap = {}
 
-    errorMap[FireError.QUOTA_EXCEEDED_ERR] = 'File system storage limit exceeded'
+    errorMap[FileError.QUOTA_EXCEEDED_ERR] = 'File system storage limit exceeded'
     errorMap[FileError.NOT_FOUND_ERR] = 'File or directory not found'
     errorMap[FileError.SECURITY_ERR] = 'Security Error'
-    errorMap[FireError.INVALID_MODIFICATION_ERR] = 'Invalid modification'
+    errorMap[FileError.INVALID_MODIFICATION_ERR] = 'Invalid modification'
     errorMap[FileError.TYPE_MISMATCH_ERR] = 'This file extension is not supported'
 
     if errorMap[e.code]
@@ -91,7 +140,7 @@ do ->
           createDirectory(fileSystem.root, 'Documents/Images/Nature/Sky/')
         errorCallback: errorHandler
 
-      window.webkitStorageInfo.requestQuota defaults.type, defaults.size, (grantedBytes) ->
+      storageInfo.requestQuota defaults.type, defaults.size, (grantedBytes) ->
         requestFS(defaults.type, grantedBytes, defaults.successCallback, defaults.errorCallback)
       , (e) ->
         console.log('Error', e)
@@ -99,4 +148,12 @@ do ->
       if data?
         createFile(path, data)
       else
-        createDirectory(fileSystem.root, path)
+        [dirs..., fileName] = path.split('/')
+
+        unless isFile(fileName)
+          dirs.push(fileName)
+          fileName = ''
+
+        dirPath = dirs.join('/')
+
+        readDirectory(fileSystem.root, dirPath, fileName)

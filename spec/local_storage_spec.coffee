@@ -1,29 +1,37 @@
 # put `describe` and `it` in the global namespace
 buster.spec.expose()
 
-describe 'local storage', ->
-  before ->
-    for k in Object.keys(localStorage)
-      localStorage.removeItem(k)
+deleteKeys = ->
+  for k in Object.keys(localStorage)
+    localStorage.removeItem(k)
 
+describe 'local storage', ->
   it 'defines file method', ->
     expect(Persist.localStorage.file).toBeDefined()
 
 describe 'a path string', ->
-  describe 'containing an empty string', ->
+  describe 'that is empty', ->
+    before ->
+      deleteKeys()
+
     it 'does not try to create a file', ->
       Persist.localStorage.file('', 'does not work')
 
       expect(Persist.localStorage.file('')).not.toBeDefined()
+      expect(localStorage.length).toEqual(0)
 
   describe 'containing only a slash', ->
+    before ->
+      deleteKeys()
+
     it 'does not try to create a file', ->
       Persist.localStorage.file('/', 'does not work')
 
       expect(Persist.localStorage.file('/')).not.toBeDefined()
+      expect(localStorage.length).toEqual(0)
 
   describe 'containing a leading slash', ->
-    it 'is treated the same as without the slash', ->
+    it 'is treated the same as a path without the slash', ->
       Persist.localStorage.file('/a/leading/slash.txt', 'leading slash')
 
       leadingSlashFile = Persist.localStorage.file('/a/leading/slash.txt')
@@ -73,8 +81,8 @@ describe 'Persist.localStorage#file', ->
         it 'returns undefined', ->
           directory = expect(Persist.localStorage.file('no/dir')).not.toBeDefined()
 
-  describe 'saving data', ->
-    describe 'creating an empty directory', ->
+  describe 'creating', ->
+    describe 'an empty directory', ->
       after ->
         localStorage.removeItem('dir')
         localStorage.removeItem('nested/empty/dir')
@@ -151,6 +159,7 @@ describe 'Persist.localStorage#file', ->
         Persist.localStorage.remove('a/directory')
 
         expect(Persist.localStorage.file('a/directory')).not.toBeDefined()
+
     describe 'when the path points to a file', ->
       it 'only deletes the file', ->
         Persist.localStorage.remove('a/directory/remove_me.txt')

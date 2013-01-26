@@ -18,7 +18,7 @@ do ->
     storageMode = 'localStorage'
 
   # debugging
-  storageMode = 'localStorage'
+  storageMode = 'fileSystem'
 
   Persist[storageMode].initialize()
 

@@ -22,7 +22,9 @@ constructDirectoryPath = (directories) ->
 normalizePath = (path) ->
   path = path.slice(1) if path[0] is '/'
 
-  path = path.substr(0, path.length - 1) if path[path.length - 1] is '/'
+  length = path.length
+
+  path = path.substr(0, length - 1) if path[length - 1] is '/'
 
   return path
 
@@ -35,6 +37,8 @@ Persist.localStorage =
 
   file: (path, data) ->
     path = normalizePath(path)
+
+    return unless path.length
 
     [directories..., fileName] = path.split '/'
 
