@@ -19,25 +19,22 @@ do ->
       return createDirectory(dir, newPath) if directories.length
     , errorHandler
 
-  readDirectory = (root, dirPath, fileName) ->
+  readDirectory = (root, dirPath) ->
     dirPath = normalizePath(dirPath)
-
-    output = null
 
     root.getDirectory dirPath, {}, (dir) ->
       reader = dir.createReader()
 
       reader.readEntries (entries) ->
-        for entry in entries
-          if fileName.length
-            console.log 'File Matched' if fileName is entry.name
-          else
-            if entry.isDirectory
-              console.log "Dir: #{entry.fullPath}"
-            else if entry.isFile
-              console.log "File: #{entry.fullPath}"
+        results = []
 
-        undefined
+        for entry in entries
+          type = 'F' if entry.isFile
+          type = 'D' if entry.isDirectory
+
+          results.push(entry.name + '-' + type)
+
+        console.log results.sort()
       , errorHandler
     , errorHandler
 
@@ -102,15 +99,16 @@ do ->
     return data
 
   readFile = (path) ->
+    reader = new FileReader()
+
+    reader.onloadend = (e) ->
+      console.log @result
+
     fileSystem.root.getFile path, {}, (entry) ->
       entry.file (f) ->
-        reader = new FileReader()
-
         reader.readAsText(f)
       , errorHandler
     , errorHandler
-
-    return null
 
   errorHandler = (e) ->
     errorMap = {}
@@ -148,12 +146,6 @@ do ->
       if data?
         createFile(path, data)
       else
-        [dirs..., fileName] = path.split('/')
-
-        unless isFile(fileName)
-          dirs.push(fileName)
-          fileName = ''
-
-        dirPath = dirs.join('/')
-
-        readDirectory(fileSystem.root, dirPath, fileName)
+        readFile(path)
+    list: (dirPath) ->
+      readDirectory(fileSystem.root, dirPath)

@@ -2,8 +2,7 @@
 buster.spec.expose()
 
 deleteKeys = ->
-  for k in Object.keys(localStorage)
-    localStorage.removeItem(k)
+  localStorage.clear()
 
 describe 'local storage', ->
   it 'defines file method', ->
