@@ -10,14 +10,17 @@ do ->
 
   if supportsLocalStorage()
     storageMode = 'localStorage'
-
-  Persist[storageMode].initialize()
+  else
+    throw new Error("Your browser doesn't support the local storage API")
 
   Persist.save = (filePath, data) ->
     Persist[storageMode].file(filePath, data)
 
   Persist.find = (filePath) ->
     Persist[storageMode].file(filePath)
+
+  Persist.delete = (filePath) ->
+    Persist[storageMode].remove(filePath)
 
   Persist.toString = ->
     Persist[storageMode].toString()

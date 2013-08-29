@@ -32,9 +32,6 @@ isFile = (string) ->
   string.indexOf('.') > -1
 
 Persist.localStorage =
-  initialize: ->
-    ;
-
   file: (path, data) ->
     path = normalizePath(path)
 

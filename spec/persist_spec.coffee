@@ -1,11 +1,14 @@
 buster.spec.expose()
 
-describe 'Top level namespace', ->
-  it 'should exist', ->
+describe 'Persist', ->
+  it 'exists', ->
     expect(Persist).toBeDefined()
 
-  it 'should define save method', ->
+  it 'defines a save method', ->
     expect(Persist.save).toBeDefined()
 
-  it 'should define find method', ->
+  it 'defines a find method', ->
     expect(Persist.find).toBeDefined()
+
+  it 'defines a delete method', ->
+    expect(Persist.delete).toBeDefined()

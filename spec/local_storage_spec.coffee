@@ -1,6 +1,10 @@
 # put `describe` and `it` in the global namespace
 buster.spec.expose()
 
+# TODO specs for removing items
+# TODO specs for trying to add when
+# the storage limit has been reached
+
 describe 'local storage', ->
   before ->
     localStorage.clear()
