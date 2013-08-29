@@ -1,7 +1,7 @@
 var config = module.exports;
 
 config["My tests"] = {
-  env: "browser", // or "node"
+  env: "browser",
   extensions: [require('buster-coffee')],
   rootPath: "../",
   sources: [

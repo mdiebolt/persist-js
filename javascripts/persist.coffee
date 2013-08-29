@@ -1,6 +1,8 @@
 window.Persist ||= {}
 
 do ->
+  # support adapters for file system
+  # and other storage methods
   storageMode = null
 
   supportsLocalStorage = ->
