@@ -1,6 +1,3 @@
-#= require local_storage
-#= require file_system
-
 window.Persist ||= {}
 
 do ->
@@ -9,16 +6,8 @@ do ->
   supportsLocalStorage = ->
     window.localStorage?
 
-  supportsFileSystem = ->
-    window.requestFileSystem? || window.webkitRequestFileSystem?
-
-  if supportsFileSystem()
-    storageMode = 'fileSystem'
-  else if supportsLocalStorage()
+  if supportsLocalStorage()
     storageMode = 'localStorage'
-
-  # debugging
-  storageMode = 'fileSystem'
 
   Persist[storageMode].initialize()
 
