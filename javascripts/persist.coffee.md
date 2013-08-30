@@ -5,6 +5,11 @@ Define root level namespace
 
     window.Persist ||= {}
 
+Determines whether browser supports localStorage API.
+
+    supportsLocalStorage = ->
+      window.localStorage?
+
 Version of `JSON.parse` that returns `undefined` instead of blowing up on invalid JSON.
 
     safeParse = (string) ->
@@ -41,8 +46,14 @@ Pull off leading `/` or trailing `/` in file path string
 
       return path
 
+We assume the string represents a file
+
     isFile = (string) ->
       string.indexOf('.') > -1
+
+Implement localStorage adapter. In the future we could support multiple adapters for Persistence mechanisms such as the HTML FileSystem API, Dropbox, GitHub gists, etc.
+
+    storageMode = null
 
     Persist.localStorage =
       file: (path, data) ->
@@ -80,6 +91,8 @@ Pull off leading `/` or trailing `/` in file path string
             if item = safeGet(path)
               JSON.parse(item)
 
+Remove a file or diretory corresponding to a file path string.
+
       remove: (path) ->
         path = normalizePath(path)
 
@@ -99,6 +112,8 @@ Pull off leading `/` or trailing `/` in file path string
 
           localStorage.removeItem(path)
 
+Visualize the simulated file tree visually. Useful for debugging.
+
       toString: ->
         output = '\n'
 
@@ -110,19 +125,16 @@ Pull off leading `/` or trailing `/` in file path string
 
         output
 
-    # Export public API
+## Public API
 
-    # support adapters for file system
-    # and other storage methods
-    storageMode = null
-
-    supportsLocalStorage = ->
-      window.localStorage?
+Blow up if the browser doesn't support the localStorage API.
 
     if supportsLocalStorage()
       storageMode = 'localStorage'
     else
       throw new Error("Your browser doesn't support the local storage API")
+
+Expose three simple methods for manipulating files: save, find, and delete.
 
     Persist.save = (filePath, data) ->
       Persist[storageMode].file(filePath, data)
@@ -133,8 +145,8 @@ Pull off leading `/` or trailing `/` in file path string
     Persist.delete = (filePath) ->
       Persist[storageMode].remove(filePath)
 
-    # add public methods directly to
-    # the browser localStorage object
+Add public methods directly to the browser localStorage object. Not for the faint of heart.
+
     Persist.pollute = ->
       for method in ["save", "find", "delete"]
         localStorage.__proto__[method] = Persist[method]
