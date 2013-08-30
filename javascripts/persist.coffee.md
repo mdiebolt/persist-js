@@ -46,7 +46,7 @@ Pull off leading `/` or trailing `/` in file path string
 
       return path
 
-We assume the string represents a file
+We assume the string represents a file if it has an extension
 
     isFile = (string) ->
       string.indexOf('.') > -1
@@ -56,6 +56,9 @@ Implement localStorage adapter. In the future we could support multiple adapters
     storageMode = null
 
     Persist.localStorage =
+
+When called with just a `path` string, looks up a file. When called with `data` also, writes a file, overwriting existing files at that location.
+
       file: (path, data) ->
         path = normalizePath(path)
 
@@ -63,24 +66,28 @@ Implement localStorage adapter. In the future we could support multiple adapters
 
         [directories..., fileName] = path.split '/'
 
-        # treat the file as a directory if there is no extension
+Treat the file as a directory if there is no extension.
+
         unless isFile(fileName)
           directories.push(fileName)
           fileName = ''
 
-        # file data is provided
+File data is provided.
+
         if data?
           directoryPath = constructDirectoryPath(directories)
 
-          # see if there are already files saved in this
-          # directory. Otherwise, create a new directory
+Check if there are already files saved in this directory. Otherwise, create a new directory.
+
           files = safeParse(safeGet(directoryPath)) || {}
 
           if isFile(fileName)
             files[fileName] = data
 
           localStorage.setItem(directoryPath, JSON.stringify(files))
-        # no data was provided so we're using this as a getter
+
+No data was provided so we're using this as a getter.
+
         else
           if isFile(fileName)
             directoryPath = constructDirectoryPath(directories)
@@ -91,7 +98,7 @@ Implement localStorage adapter. In the future we could support multiple adapters
             if item = safeGet(path)
               JSON.parse(item)
 
-Remove a file or diretory corresponding to a file path string.
+Remove a file or directory corresponding to a file path string.
 
       remove: (path) ->
         path = normalizePath(path)
