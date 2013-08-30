@@ -5,6 +5,10 @@
 
   window.Persist || (window.Persist = {});
 
+  supportsLocalStorage = function() {
+    return window.localStorage != null;
+  };
+
   safeParse = function(string) {
     var e;
     try {
@@ -49,6 +53,8 @@
   isFile = function(string) {
     return string.indexOf('.') > -1;
   };
+
+  storageMode = null;
 
   Persist.localStorage = {
     file: function(path, data) {
@@ -110,12 +116,6 @@
       }
       return output;
     }
-  };
-
-  storageMode = null;
-
-  supportsLocalStorage = function() {
-    return window.localStorage != null;
   };
 
   if (supportsLocalStorage()) {
