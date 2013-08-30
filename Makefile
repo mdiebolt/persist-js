@@ -1,2 +1,2 @@
 release:
-	coffee --output build --compile javascripts
+	coffee --literate --output build --compile javascripts
