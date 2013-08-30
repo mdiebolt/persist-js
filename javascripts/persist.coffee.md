@@ -5,11 +5,15 @@ Define root level namespace
 
     window.Persist ||= {}
 
+Version of `JSON.parse` that returns `undefined` instead of blowing up on invalid JSON.
+
     safeParse = (string) ->
       try
         return JSON.parse string
       catch e
         return undefined
+
+Get an item from `localStorage`. Return `undefined` instead of blowing up if the item doesn't exist.
 
     safeGet = (string) ->
       try
@@ -17,12 +21,16 @@ Define root level namespace
       catch e
         return undefined
 
+Transform a list of directories into a directory path string.
+
     constructDirectoryPath = (directories) ->
       path = directories.join('/')
 
       path += '/' unless path.length
 
       return path
+
+Pull off leading `/` or trailing `/` in file path string
 
     normalizePath = (path) ->
       path = path.slice(1) if path[0] is '/'

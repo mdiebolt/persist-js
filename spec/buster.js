@@ -5,7 +5,7 @@ config["My tests"] = {
   extensions: [require('buster-coffee')],
   rootPath: "../",
   sources: [
-    "javascripts/*.coffee"
+    "javascripts/*.coffee.md"
   ],
   tests: [
     "spec/*_spec.coffee"
