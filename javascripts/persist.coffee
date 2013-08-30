@@ -120,5 +120,10 @@ Persist.find = (filePath) ->
 Persist.delete = (filePath) ->
   Persist[storageMode].remove(filePath)
 
-Persist.toString = ->
-  Persist[storageMode].toString()
+# add public methods directly to
+# the browser localStorage object
+Persist.pollute = ->
+  for method in ["save", "find", "delete"]
+    localStorage.__proto__[method] = Persist[method]
+
+  localStorage

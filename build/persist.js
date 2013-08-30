@@ -136,8 +136,14 @@
     return Persist[storageMode].remove(filePath);
   };
 
-  Persist.toString = function() {
-    return Persist[storageMode].toString();
+  Persist.pollute = function() {
+    var method, _i, _len, _ref;
+    _ref = ["save", "find", "delete"];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      method = _ref[_i];
+      localStorage.__proto__[method] = Persist[method];
+    }
+    return localStorage;
   };
 
 }).call(this);
